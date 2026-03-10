@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SAO Management Center - CCCS</title>
+  
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#354024">
+  
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/dark-mode.css">
+  
+  <!-- Scripts -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#354024',
+            secondary: '#4c3d19',
+            accent: '#889063',
+            light: '#cfbb99',
+            lighter: '#e5d7c4'
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    body {
+      background-image: url('https://random-gray-6ix7wliexl.edgeone.app/IMG_9225.jpeg');
+      background-size: cover;
+      background-attachment: fixed;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-color: rgba(53, 64, 36, 0.88);
+      z-index: -1;
+    }
+    .glass {
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    .tab-button.active {
+      background-color: rgba(53, 64, 36, 0.3);
+      font-weight: 600;
+      border-bottom: 3px solid #889063;
+    }
+    .content-tab {
+      display: none;
+    }
+    .content-tab.active {
+      display: block;
+    }
+    .alert-badge {
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+  </style>
+</head>
+<body class="min-h-screen p-6">
+  <div class="max-w-7xl mx-auto">
+    
+    <!-- Header -->
+    <div class="glass rounded-2xl p-6 mb-6">
+      <div class="flex justify-between items-center">
+        <div>
+          <h1 class="text-3xl font-bold text-lighter mb-2">SAO Management Center</h1>
+          <p class="text-light">Attendance & Appointment Control Hub</p>
+        </div>
+        <div class="flex gap-3">
+          <button onclick="window.location.href='sao-dashboard.html'" class="bg-accent text-white px-4 py-2 rounded-lg hover:bg-primary transition">
+            <ion-icon name="arrow-back" class="align-middle"></ion-icon> Back to Dashboard
+          </button>
+          <button onclick="refreshData()" class="bg-primary text-lighter px-4 py-2 rounded-lg hover:bg-secondary transition">
+            <ion-icon name="refresh" class="align-middle"></ion-icon> Refresh
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alert Summary Cards -->
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      <div class="glass rounded-xl p-4 border-l-4 border-red-500">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-light">Critical Alerts</span>
+          <ion-icon name="warning" class="text-2xl text-red-500 alert-badge"></ion-icon>
+        </div>
+        <p class="text-3xl font-bold text-lighter" id="criticalAlerts">0</p>
+        <p class="text-xs text-light mt-1">Requires immediate action</p>
+      </div>
+      
+      <div class="glass rounded-xl p-4 border-l-4 border-yellow-500">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-light">Pending Appointments</span>
+          <ion-icon name="time" class="text-2xl text-yellow-500"></ion-icon>
+        </div>
+        <p class="text-3xl font-bold text-lighter" id="pendingAppointments">0</p>
+        <p class="text-xs text-light mt-1">Awaiting confirmation</p>
+      </div>
+      
+      <div class="glass rounded-xl p-4 border-l-4 border-orange-500">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-light">Attendance Issues</span>
+          <ion-icon name="alert-circle" class="text-2xl text-orange-500"></ion-icon>
+        </div>
+        <p class="text-3xl font-bold text-lighter" id="attendanceIssues">0</p>
+        <p class="text-xs text-light mt-1">3x late, 5x late, 3x absent</p>
+      </div>
+      
+      <div class="glass rounded-xl p-4 border-l-4 border-blue-500">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-light">Today's Absences</span>
+          <ion-icon name="people" class="text-2xl text-blue-500"></ion-icon>
+        </div>
+        <p class="text-3xl font-bold text-lighter" id="todayAbsences">0</p>
+        <p class="text-xs text-light mt-1">Students absent today</p>
+      </div>
+    </div>
+
+    <!-- Main Tabs -->
+    <div class="glass rounded-2xl p-6 mb-6">
+      <div class="flex gap-2 border-b border-primary/20 mb-6">
+        <button onclick="switchTab('attendance')" class="tab-button active px-6 py-3 text-lighter transition">
+          <ion-icon name="calendar" class="align-middle mr-2"></ion-icon>
+          Attendance Monitor
+        </button>
+        <button onclick="switchTab('appointments')" class="tab-button px-6 py-3 text-lighter transition">
+          <ion-icon name="time" class="align-middle mr-2"></ion-icon>
+          Appointments
+        </button>
+        <button onclick="switchTab('alerts')" class="tab-button px-6 py-3 text-lighter transition">
+          <ion-icon name="notifications" class="align-middle mr-2"></ion-icon>
+          Alert System
+        </button>
+        <button onclick="switchTab('actions')" class="tab-button px-6 py-3 text-lighter transition">
+          <ion-icon name="flash" class="align-middle mr-2"></ion-icon>
+          Quick Actions
+        </button>
+      </div>
+
+      <!-- Attendance Monitor Tab -->
+      <div id="attendanceTab" class="content-tab active">
+        <div class="grid grid-cols-3 gap-6 mb-6">
+          <div>
+            <label class="block text-sm font-semibold text-light mb-2">Date</label>
+            <input type="date" id="attendanceDate" class="w-full px-4 py-2 rounded-lg border-2 border-primary focus:outline-none" onchange="loadAttendanceData()">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-light mb-2">Grade Level</label>
+            <select id="gradeFilter" class="w-full px-4 py-2 rounded-lg border-2 border-primary focus:outline-none" onchange="loadAttendanceData()">
+              <option value="all">All Grades</option>
+              <option value="7">Grade 7</option>
+              <option value="8">Grade 8</option>
+              <option value="9">Grade 9</option>
+              <option value="10">Grade 10</option>
+              <option value="11">Grade 11</option>
+              <option value="12">Grade 12</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-light mb-2">Status Filter</label>
+            <select id="statusFilter" class="w-full px-4 py-2 rounded-lg border-2 border-primary focus:outline-none" onchange="loadAttendanceData()">
+              <option value="all">All Status</option>
+              <option value="absent">Absent Only</option>
+              <option value="late">Late Only</option>
+              <option value="present">Present Only</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Attendance Summary -->
+        <div class="grid grid-cols-5 gap-4 mb-6">
+          <div class="bg-white/30 rounded-lg p-4 text-center">
+            <p class="text-sm text-light">Total Students</p>
+            <p class="text-2xl font-bold text-lighter" id="totalStudents">0</p>
+          </div>
+          <div class="bg-green-100 rounded-lg p-4 text-center">
+            <p class="text-sm text-green-700">Present</p>
+            <p class="text-2xl font-bold text-green-800" id="presentCount">0</p>
+          </div>
+          <div class="bg-red-100 rounded-lg p-4 text-center">
+            <p class="text-sm text-red-700">Absent</p>
+            <p class="text-2xl font-bold text-red-800" id="absentCount">0</p>
+          </div>
+          <div class="bg-yellow-100 rounded-lg p-4 text-center">
+            <p class="text-sm text-yellow-700">Late</p>
+            <p class="text-2xl font-bold text-yellow-800" id="lateCount">0</p>
+          </div>
+          <div class="bg-blue-100 rounded-lg p-4 text-center">
+            <p class="text-sm text-blue-700">Excused</p>
+            <p class="text-2xl font-bold text-blue-800" id="excusedCount">0</p>
+          </div>
+        </div>
+
+        <!-- Attendance Issues List -->
+        <div class="bg-white/20 rounded-xl p-4">
+          <h3 class="font-bold text-lighter mb-4">Students with Attendance Issues</h3>
+          <div id="attendanceIssuesList" class="space-y-3">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Appointments Tab -->
+      <div id="appointmentsTab" class="content-tab">
+        <div class="flex gap-4 mb-6">
+          <button onclick="filterAppointments('all')" class="appointment-filter active px-4 py-2 rounded-lg bg-primary/20 text-primary font-semibold">All</button>
+          <button onclick="filterAppointments('pending')" class="appointment-filter px-4 py-2 rounded-lg bg-white/50 text-dark">Pending</button>
+          <button onclick="filterAppointments('today')" class="appointment-filter px-4 py-2 rounded-lg bg-white/50 text-dark">Today</button>
+          <button onclick="filterAppointments('upcoming')" class="appointment-filter px-4 py-2 rounded-lg bg-white/50 text-dark">Upcoming</button>
+          <button onclick="filterAppointments('violation')" class="appointment-filter px-4 py-2 rounded-lg bg-white/50 text-dark">Violations</button>
+          <button onclick="filterAppointments('attendance')" class="appointment-filter px-4 py-2 rounded-lg bg-white/50 text-dark">Attendance</button>
+        </div>
+
+        <div id="appointmentsList" class="space-y-4">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Alert System Tab -->
+      <div id="alertsTab" class="content-tab">
+        <div class="grid grid-cols-2 gap-6">
+          <!-- Automated Alerts Configuration -->
+          <div class="bg-white/20 rounded-xl p-6">
+            <h3 class="font-bold text-lighter mb-4">Automated Alert Rules</h3>
+            <div class="space-y-4">
+              <div class="bg-white/30 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="font-semibold text-lighter">3x Late Alert</span>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" class="sr-only peer" checked>
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                  </label>
+                </div>
+                <p class="text-sm text-light">Auto-notify parents when student is late 3 times</p>
+              </div>
+
+              <div class="bg-white/30 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="font-semibold text-lighter">5x Late Alert</span>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" class="sr-only peer" checked>
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                  </label>
+                </div>
+                <p class="text-sm text-light">Schedule mandatory parent conference</p>
+              </div>
+
+              <div class="bg-white/30 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="font-semibold text-lighter">3x Absent Alert</span>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" class="sr-only peer" checked>
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                  </label>
+                </div>
+                <p class="text-sm text-light">Immediate parent notification and meeting</p>
+              </div>
+
+              <div class="bg-white/30 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="font-semibold text-lighter">Daily Absence Report</span>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" class="sr-only peer" checked>
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                  </label>
+                </div>
+                <p class="text-sm text-light">Send daily absence summary to parents</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Alerts -->
+          <div class="bg-white/20 rounded-xl p-6">
+            <h3 class="font-bold text-lighter mb-4">Recent Alerts Sent</h3>
+            <div id="recentAlertsList" class="space-y-3">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions Tab -->
+      <div id="actionsTab" class="content-tab">
+        <div class="grid grid-cols-3 gap-6">
+          <!-- Send Bulk Notifications -->
+          <div class="bg-white/20 rounded-xl p-6">
+            <h3 class="font-bold text-lighter mb-4">
+              <ion-icon name="mail" class="align-middle mr-2"></ion-icon>
+              Send Bulk Notification
+            </h3>
+            <div class="space-y-3">
+              <select class="w-full px-4 py-2 rounded-lg border-2 border-primary" id="bulkTarget">
+                <option value="">Select Target</option>
+                <option value="all">All Students</option>
+                <option value="grade7">Grade 7</option>
+                <option value="grade8">Grade 8</option>
+                <option value="grade9">Grade 9</option>
+                <option value="grade10">Grade 10</option>
+                <option value="grade11">Grade 11</option>
+                <option value="grade12">Grade 12</option>
+                <option value="parents">All Parents</option>
+              </select>
+              <textarea class="w-full px-4 py-2 rounded-lg border-2 border-primary" rows="4" placeholder="Message..."></textarea>
+              <button onclick="sendBulkNotification()" class="w-full bg-primary text-lighter py-2 rounded-lg hover:bg-secondary transition">
+                Send Notification
+              </button>
+            </div>
+          </div>
+
+          <!-- Generate Reports -->
+          <div class="bg-white/20 rounded-xl p-6">
+            <h3 class="font-bold text-lighter mb-4">
+              <ion-icon name="document-text" class="align-middle mr-2"></ion-icon>
+              Generate Reports
+            </h3>
+            <div class="space-y-3">
+              <button onclick="generateReport('daily-attendance')" class="w-full bg-accent text-white py-3 rounded-lg hover:bg-primary transition text-left px-4">
+                <ion-icon name="calendar-outline" class="align-middle mr-2"></ion-icon>
+                Daily Attendance Report
+              </button>
+              <button onclick="generateReport('weekly-summary')" class="w-full bg-accent text-white py-3 rounded-lg hover:bg-primary transition text-left px-4">
+                <ion-icon name="stats-chart" class="align-middle mr-2"></ion-icon>
+                Weekly Summary
+              </button>
+              <button onclick="generateReport('attendance-issues')" class="w-full bg-accent text-white py-3 rounded-lg hover:bg-primary transition text-left px-4">
+                <ion-icon name="warning-outline" class="align-middle mr-2"></ion-icon>
+                Attendance Issues Report
+              </button>
+              <button onclick="generateReport('appointment-log')" class="w-full bg-accent text-white py-3 rounded-lg hover:bg-primary transition text-left px-4">
+                <ion-icon name="time-outline" class="align-middle mr-2"></ion-icon>
+                Appointment Log
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Student Lookup -->
+          <div class="bg-white/20 rounded-xl p-6">
+            <h3 class="font-bold text-lighter mb-4">
+              <ion-icon name="search" class="align-middle mr-2"></ion-icon>
+              Quick Student Lookup
+            </h3>
+            <div class="space-y-3">
+              <input type="text" class="w-full px-4 py-2 rounded-lg border-2 border-primary" placeholder="Search by LRN or Name..." id="studentSearch" onkeyup="searchStudent()">
+              <div id="studentSearchResults" class="space-y-2 max-h-64 overflow-y-auto">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="js/constants.js"></script>
+  <script src="js/sectionData.js"></script>
+  <script src="js/utilities.js"></script>
+  <script src="js/sao-management.js"></script>
+</body>
+</html>

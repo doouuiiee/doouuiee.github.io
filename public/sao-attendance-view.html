@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attendance Records - SAO Coordinator</title>
+  
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#354024">
+  
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/dark-mode.css">
+  
+  <!-- Scripts -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#354024',
+            secondary: '#4c3d19',
+            accent: '#889063',
+            light: '#cfbb99',
+            lighter: '#e5d7c4'
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    body {
+      background-image: url('https://random-gray-6ix7wliexl.edgeone.app/IMG_9225.jpeg');
+      background-size: cover;
+      background-attachment: fixed;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-color: rgba(53, 64, 36, 0.88);
+      z-index: -1;
+    }
+    .glass {
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    @media print {
+      body::before { display: none; }
+      .no-print { display: none !important; }
+      .glass { background: white; border: 1px solid #ccc; }
+      table { page-break-inside: auto; }
+      tr { page-break-inside: avoid; page-break-after: auto; }
+    }
+  </style>
+</head>
+<body class="min-h-screen p-8">
+  <div class="max-w-7xl mx-auto">
+    
+    <!-- Header -->
+    <div class="glass rounded-2xl p-6 mb-6 no-print">
+      <div class="flex justify-between items-center">
+        <div>
+          <h1 class="text-3xl font-bold text-white mb-2">Attendance Records</h1>
+          <p class="text-white">SAO Coordinator - View Submitted Attendance</p>
+        </div>
+        <button onclick="window.location.href='sao-dashboard.html'" class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-secondary transition">
+          Back to Dashboard
+        </button>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="glass rounded-2xl p-6 mb-6 no-print">
+      <div class="grid grid-cols-4 gap-4">
+        <div>
+          <label class="block text-sm font-semibold text-white mb-2">Date</label>
+          <input type="date" id="dateFilter" class="w-full px-4 py-2 rounded-lg border-2 border-primary focus:outline-none" onchange="loadAttendanceRecords()">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-white mb-2">Grade Level</label>
+          <select id="gradeFilter" class="w-full px-4 py-2 rounded-lg border-2 border-primary focus:outline-none" onchange="filterSections()">
+            <option value="">Select Grade</option>
+            <option value="7">Grade 7</option>
+            <option value="8">Grade 8</option>
+            <option value="9">Grade 9</option>
+            <option value="10">Grade 10</option>
+            <option value="11">Grade 11</option>
+            <option value="12">Grade 12</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-white mb-2">Section</label>
+          <select id="sectionFilter" class="w-full px-4 py-2 rounded-lg border-2 border-primary focus:outline-none" onchange="loadAttendanceRecords()">
+            <option value="">Select Section</option>
+          </select>
+        </div>
+        <div class="flex items-end gap-2">
+          <button onclick="printSheet()" class="flex-1 bg-accent text-white px-4 py-2 rounded-lg hover:bg-secondary transition">
+            <ion-icon name="print" class="text-xl"></ion-icon> Print
+          </button>
+          <button onclick="exportSheet()" class="flex-1 bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition">
+            <ion-icon name="download" class="text-xl"></ion-icon> Export
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Attendance Sheet -->
+    <div class="glass rounded-2xl p-8" id="attendanceSheetContainer">
+      <!-- Header -->
+      <div class="text-center mb-6">
+        <img src="https://strategic-azure-2e1tmo9cyy.edgeone.app/IMG_3170.png" alt="School Logo" class="w-20 h-20 mx-auto mb-3">
+        <h2 class="text-2xl font-bold text-primary">Cordova Catholic Cooperative School</h2>
+        <p class="text-primary">Daily Attendance Record</p>
+        <p class="text-primary font-semibold mt-2" id="sheetDate">Date: March 8, 2026</p>
+      </div>
+
+      <!-- Section Info -->
+      <div class="grid grid-cols-3 gap-4 mb-6 text-sm">
+        <div class="glass rounded-lg p-3">
+          <p class="text-white">Grade & Section:</p>
+          <p class="font-bold text-white" id="sheetSection">Select section to view</p>
+        </div>
+        <div class="glass rounded-lg p-3">
+          <p class="text-white">Adviser:</p>
+          <p class="font-bold text-white" id="sheetAdviser">-</p>
+        </div>
+        <div class="glass rounded-lg p-3">
+          <p class="text-white">Total Students:</p>
+          <p class="font-bold text-white" id="sheetTotal">0</p>
+        </div>
+      </div>
+
+      <!-- Subject Tabs -->
+      <div class="mb-6 no-print">
+        <label class="block text-sm font-semibold text-white mb-2">Subject/Class</label>
+        <select id="subjectFilter" class="w-full px-4 py-2 rounded-lg border-2 border-primary focus:outline-none" onchange="loadSubjectAttendance()">
+          <option value="">Select Subject</option>
+        </select>
+      </div>
+
+      <!-- Attendance Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm border-collapse">
+          <thead>
+            <tr class="border-b-2 border-primary">
+              <th class="text-left py-3 px-2 text-white font-bold">#</th>
+              <th class="text-left py-3 px-2 text-white font-bold">LRN</th>
+              <th class="text-left py-3 px-2 text-white font-bold">Name</th>
+              <th class="text-left py-3 px-2 text-white font-bold">Position</th>
+              <th class="text-center py-3 px-2 text-white font-bold">Time In</th>
+              <th class="text-center py-3 px-2 text-white font-bold">Status</th>
+              <th class="text-left py-3 px-2 text-white font-bold">Remarks</th>
+            </tr>
+          </thead>
+          <tbody id="attendanceTableBody">
+            <tr>
+              <td colspan="7" class="text-center py-8 text-white">
+                Please select date, grade, section, and subject to view attendance records
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Summary -->
+      <div class="mt-6 grid grid-cols-5 gap-4">
+        <div class="glass rounded-lg p-4 text-center">
+          <p class="text-white text-sm">Total</p>
+          <p class="text-2xl font-bold text-white" id="summaryTotal">0</p>
+        </div>
+        <div class="glass rounded-lg p-4 text-center">
+          <p class="text-white text-sm">Present</p>
+          <p class="text-2xl font-bold text-green-500" id="summaryPresent">0</p>
+        </div>
+        <div class="glass rounded-lg p-4 text-center">
+          <p class="text-white text-sm">Absent</p>
+          <p class="text-2xl font-bold text-red-500" id="summaryAbsent">0</p>
+        </div>
+        <div class="glass rounded-lg p-4 text-center">
+          <p class="text-white text-sm">Late</p>
+          <p class="text-2xl font-bold text-yellow-500" id="summaryLate">0</p>
+        </div>
+        <div class="glass rounded-lg p-4 text-center">
+          <p class="text-white text-sm">Excused</p>
+          <p class="text-2xl font-bold text-blue-500" id="summaryExcused">0</p>
+        </div>
+      </div>
+
+      <!-- Submission Info -->
+      <div class="mt-6 glass rounded-lg p-4">
+        <div class="grid grid-cols-2 gap-4 text-white text-sm">
+          <div>
+            <p class="opacity-80">Recorded by:</p>
+            <p class="font-bold" id="recordedBy">-</p>
+          </div>
+          <div class="text-right">
+            <p class="opacity-80">Submitted at:</p>
+            <p class="font-bold" id="submittedAt">-</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="js/sectionData.js"></script>
+  <script src="js/utilities.js"></script>
+  <script src="js/sao-attendance-view.js"></script>
+</body>
+</html>

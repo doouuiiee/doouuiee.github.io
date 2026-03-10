@@ -1,0 +1,49 @@
+{
+  "name": "SAO E-Record Filing System",
+  "short_name": "SAO E-Record",
+  "description": "Student Affairs Office E-Record Filing System for Cordova Catholic Cooperative School",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#354024",
+  "theme_color": "#354024",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "productivity"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Student Dashboard",
+      "short_name": "Student",
+      "description": "Access student dashboard",
+      "url": "/student-dashboard.html",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Teacher Dashboard",
+      "short_name": "Teacher",
+      "description": "Access teacher dashboard",
+      "url": "/teacher-dashboard.html",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "SAO Dashboard",
+      "short_name": "SAO",
+      "description": "Access SAO dashboard",
+      "url": "/sao-dashboard.html",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

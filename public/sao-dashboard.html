@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SAO Dashboard - SAO System</title>
+  
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#354024">
+  
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/dark-mode.css">
+  
+  <!-- Scripts -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#354024',
+            secondary: '#4c3d19',
+            accent: '#889063',
+            light: '#cfbb99',
+            lighter: '#e5d7c4'
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    body {
+      background-image: url('https://random-gray-6ix7wliexl.edgeone.app/IMG_9225.jpeg');
+      background-size: cover;
+      background-attachment: fixed;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-color: rgba(53, 64, 36, 0.88);
+      z-index: -1;
+    }
+    .glass {
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    .sidebar-item {
+      transition: all 0.3s;
+    }
+    .sidebar-item:hover {
+      background-color: rgba(53, 64, 36, 0.2);
+    }
+    .sidebar-item.active {
+      background-color: rgba(53, 64, 36, 0.3);
+      font-weight: 600;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 50;
+    }
+    .modal.active {
+      display: flex;
+    }
+    .content-section {
+      display: none;
+    }
+    .content-section.active {
+      display: block;
+    }
+    .folder-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  <div class="flex h-screen">
+    <!-- Sidebar -->
+    <div class="w-20 hover:w-64 transition-all duration-300 glass p-4 flex flex-col group">
+      <div class="flex flex-col items-center mb-8">
+        <img src="https://via.placeholder.com/80" alt="Profile" class="w-16 h-16 rounded-full mb-2" id="sidebarProfilePic">
+        <p class="hidden group-hover:block text-sm font-semibold text-lighter text-center" id="sidebarSAOName">SAO Staff</p>
+      </div>
+      
+      <div class="hidden group-hover:block mb-4">
+        <input type="text" placeholder="Search..." class="w-full px-3 py-2 rounded-lg border border-primary/30 text-sm" onkeyup="searchContent(this.value)">
+      </div>
+      
+      <nav class="flex-1 space-y-2">
+        <a href="#" onclick="showSection('dashboard')" class="sidebar-item active flex items-center gap-3 px-3 py-3 rounded-lg text-lighter" data-section="dashboard">
+          <ion-icon name="stats-chart" class="text-2xl text-accent"></ion-icon>
+          <span class="hidden group-hover:block">Dashboard</span>
+        </a>
+        <a href="#" onclick="showSection('sections')" class="sidebar-item flex items-center gap-3 px-3 py-3 rounded-lg text-lighter" data-section="sections">
+          <ion-icon name="folder" class="text-2xl text-accent"></ion-icon>
+          <span class="hidden group-hover:block">Section Folders</span>
+        </a>
+        <a href="#" onclick="showSection('notifications')" class="sidebar-item flex items-center gap-3 px-3 py-3 rounded-lg text-lighter" data-section="notifications">
+          <ion-icon name="notifications" class="text-2xl text-accent"></ion-icon>
+          <span class="hidden group-hover:block">Notifications</span>
+        </a>
+        <a href="#" onclick="showSection('documents')" class="sidebar-item flex items-center gap-3 px-3 py-3 rounded-lg text-lighter" data-section="documents">
+          <ion-icon name="document-text" class="text-2xl text-accent"></ion-icon>
+          <span class="hidden group-hover:block">Documents</span>
+        </a>
+        <a href="#" onclick="showSection('reports')" class="sidebar-item flex items-center gap-3 px-3 py-3 rounded-lg text-lighter" data-section="reports">
+          <ion-icon name="bar-chart" class="text-2xl text-accent"></ion-icon>
+          <span class="hidden group-hover:block">Reports</span>
+        </a>
+      </nav>
+      
+      <button onclick="logout()" class="sidebar-item flex items-center gap-3 px-3 py-3 rounded-lg text-red-600 mt-auto">
+        <ion-icon name="log-out" class="text-2xl text-red-500"></ion-icon>
+        <span class="hidden group-hover:block">Logout</span>
+      </button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 overflow-y-auto p-8">
+      <div class="max-w-7xl mx-auto">
+        
+        <!-- DASHBOARD SECTION -->
+        <div id="dashboardSection" class="content-section active">
+          <h1 class="text-3xl font-bold text-lighter mb-8">SAO Dashboard Overview</h1>
+          
+          <div class="grid grid-cols-4 gap-6 mb-8">
+            <div class="glass rounded-xl p-6">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-light">Total Students</span>
+                <ion-icon name="people" class="text-2xl text-accent"></ion-icon>
+              </div>
+              <p class="text-3xl font-bold text-lighter" id="totalStudents">1,245</p>
+              <p class="text-xs text-light mt-1">All sections</p>
+            </div>
+            <div class="glass rounded-xl p-6">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-light">Total Sections</span>
+                <ion-icon name="folder" class="text-2xl text-blue-500"></ion-icon>
+              </div>
+              <p class="text-3xl font-bold text-lighter" id="totalSections">42</p>
+              <p class="text-xs text-light mt-1">Grade 7-12</p>
+            </div>
+            <div class="glass rounded-xl p-6">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-light">Pending Requests</span>
+                <ion-icon name="time" class="text-2xl text-yellow-500"></ion-icon>
+              </div>
+              <p class="text-3xl font-bold text-lighter" id="pendingRequests">23</p>
+              <p class="text-xs text-light mt-1">Documents</p>
+            </div>
+            <div class="glass rounded-xl p-6">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-light">Notifications</span>
+                <ion-icon name="notifications" class="text-2xl text-red-500"></ion-icon>
+              </div>
+              <p class="text-3xl font-bold text-lighter" id="unreadNotifications">8</p>
+              <p class="text-xs text-light mt-1">Unread</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-6 mb-8">
+            <div class="glass rounded-2xl p-6">
+              <h3 class="font-bold text-lighter mb-4">Recent Activities</h3>
+              <div class="space-y-3" id="recentActivities">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+            
+            <div class="glass rounded-2xl p-6">
+              <h3 class="font-bold text-lighter mb-4">Quick Actions</h3>
+              <div class="grid grid-cols-2 gap-3">
+                <button onclick="window.location.href='sao-management.html'" class="bg-green-600 text-white py-4 rounded-lg hover:bg-green-700 transition font-semibold col-span-2">
+                  <ion-icon name="desktop" class="text-2xl mb-1"></ion-icon>
+                  <p>SAO Management Center</p>
+                  <p class="text-xs mt-1 opacity-80">Attendance & Appointments Hub</p>
+                </button>
+                <button onclick="sendNotification()" class="bg-primary text-lighter py-3 rounded-lg hover:bg-secondary transition text-sm">
+                  <ion-icon name="send" class="text-xl mb-1"></ion-icon>
+                  <p>Send Notification</p>
+                </button>
+                <button onclick="generateReport()" class="bg-accent text-white py-3 rounded-lg hover:bg-secondary transition text-sm">
+                  <ion-icon name="document" class="text-xl mb-1"></ion-icon>
+                  <p>Generate Report</p>
+                </button>
+                <button onclick="viewAllStudents()" class="bg-primary text-lighter py-3 rounded-lg hover:bg-secondary transition text-sm">
+                  <ion-icon name="people" class="text-xl mb-1"></ion-icon>
+                  <p>All Students</p>
+                </button>
+                <button onclick="manageDocuments()" class="bg-accent text-white py-3 rounded-lg hover:bg-secondary transition text-sm">
+                  <ion-icon name="folder-open" class="text-xl mb-1"></ion-icon>
+                  <p>Manage Docs</p>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass rounded-2xl p-6">
+            <h3 class="font-bold text-lighter mb-4">Attendance Overview</h3>
+            <div class="grid grid-cols-6 gap-4" id="attendanceOverview">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTIONS SECTION -->
+        <div id="sectionsSection" class="content-section">
+          <h1 class="text-3xl font-bold text-lighter mb-8">Section Folders</h1>
+          
+          <div class="glass rounded-2xl p-6 mb-6">
+            <div class="flex gap-4">
+              <select class="px-4 py-2 rounded-lg border border-primary/30" id="gradeFilter" onchange="filterSections()">
+                <option value="all">All Grade Levels</option>
+                <option value="7">Grade 7</option>
+                <option value="8">Grade 8</option>
+                <option value="9">Grade 9</option>
+                <option value="10">Grade 10</option>
+                <option value="11">Grade 11</option>
+                <option value="12">Grade 12</option>
+              </select>
+              <input type="text" placeholder="Search sections..." class="flex-1 px-4 py-2 rounded-lg border border-primary/30" id="sectionSearch" onkeyup="filterSections()">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-4 gap-6" id="sectionFolders">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- NOTIFICATIONS SECTION -->
+        <div id="notificationsSection" class="content-section">
+          <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-lighter">Notifications</h1>
+            <button onclick="sendNotification()" class="bg-primary text-lighter px-6 py-2 rounded-lg hover:bg-secondary transition">
+              Send New Notification
+            </button>
+          </div>
+          
+          <div class="grid grid-cols-1 gap-4" id="notificationsList">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- DOCUMENTS SECTION -->
+        <div id="documentsSection" class="content-section">
+          <h1 class="text-3xl font-bold text-lighter mb-8">Document Requests</h1>
+          
+          <div class="glass rounded-2xl p-6 mb-6">
+            <div class="flex gap-4">
+              <select class="px-4 py-2 rounded-lg border border-primary/30" id="docStatusFilter" onchange="filterDocuments()">
+                <option value="all">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="processing">Processing</option>
+                <option value="ready">Ready</option>
+                <option value="completed">Completed</option>
+              </select>
+              <input type="text" placeholder="Search requests..." class="flex-1 px-4 py-2 rounded-lg border border-primary/30" id="docSearch" onkeyup="filterDocuments()">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 gap-4" id="documentRequests">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- REPORTS SECTION -->
+        <div id="reportsSection" class="content-section">
+          <h1 class="text-3xl font-bold text-lighter mb-8">Reports & Analytics</h1>
+          
+          <div class="grid grid-cols-3 gap-6 mb-8">
+            <button onclick="generateAttendanceReport()" class="glass rounded-xl p-6 hover:shadow-lg transition text-center">
+              <ion-icon name="calendar" class="text-4xl text-accent mb-2"></ion-icon>
+              <p class="font-semibold text-lighter">Attendance Report</p>
+              <p class="text-xs text-light mt-1">Generate attendance summary</p>
+            </button>
+            <button onclick="generateEnrollmentReport()" class="glass rounded-xl p-6 hover:shadow-lg transition text-center">
+              <ion-icon name="people" class="text-4xl text-blue-500 mb-2"></ion-icon>
+              <p class="font-semibold text-lighter">Enrollment Report</p>
+              <p class="text-xs text-light mt-1">Student enrollment data</p>
+            </button>
+            <button onclick="generateDocumentReport()" class="glass rounded-xl p-6 hover:shadow-lg transition text-center">
+              <ion-icon name="document-text" class="text-4xl text-green-500 mb-2"></ion-icon>
+              <p class="font-semibold text-lighter">Document Report</p>
+              <p class="text-xs text-light mt-1">Document request summary</p>
+            </button>
+          </div>
+
+          <div class="glass rounded-2xl p-6">
+            <h3 class="font-bold text-lighter mb-4">Recent Reports</h3>
+            <div class="space-y-3" id="recentReports">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Send Notification Modal -->
+  <div id="notificationModal" class="modal items-center justify-center">
+    <div class="glass rounded-2xl p-8 max-w-2xl w-full mx-4">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-lighter">Send Notification</h2>
+        <button onclick="closeNotificationModal()" class="text-lighter hover:text-light">
+          <ion-icon name="close" class="text-3xl text-red-500"></ion-icon>
+        </button>
+      </div>
+      
+      <form onsubmit="submitNotification(event)" class="space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-light mb-1">Recipients *</label>
+          <select id="notificationRecipients" class="w-full px-4 py-2 rounded-lg border-2 border-primary focus:outline-none" required>
+            <option value="">Select Recipients</option>
+            <option value="all">All Students</option>
+            <option value="grade7">Grade 7</option>
+            <option value="grade8">Grade 8</option>
+            <option value="grade9">Grade 9</option>
+            <option value="grade10">Grade 10</option>
+            <option value="grade11">Grade 11</option>
+            <option value="grade12">Grade 12</option>
+            <option value="teachers">All Teachers</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-light mb-1">Title *</label>
+          <input type="text" id="notificationTitle" class="w-full px-4 py-2 rounded-lg border-2 border-primary focus:outline-none" placeholder="Notification title" required>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-light mb-1">Message *</label>
+          <textarea id="notificationMessage" rows="4" class="w-full px-4 py-2 rounded-lg border-2 border-primary focus:outline-none" placeholder="Type your message here..." required></textarea>
+        </div>
+        <button type="submit" class="w-full bg-primary text-lighter py-3 rounded-lg font-semibold hover:bg-secondary transition">
+          Send Notification
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Section Details Modal -->
+  <div id="sectionModal" class="modal items-center justify-center">
+    <div class="glass rounded-2xl p-8 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-lighter" id="sectionModalTitle">Section Details</h2>
+        <button onclick="closeSectionModal()" class="text-lighter hover:text-light">
+          <ion-icon name="close" class="text-3xl text-red-500"></ion-icon>
+        </button>
+      </div>
+      
+      <div id="sectionDetails">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <script src="js/utilities.js"></script>
+  <script src="js/sao-dashboard.js"></script>
+</body>
+</html>

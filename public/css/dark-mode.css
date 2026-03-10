@@ -1,0 +1,257 @@
+/* ============================================
+   DARK MODE STYLES
+   ============================================ */
+
+:root {
+  /* Light mode colors (default) */
+  --bg-primary: rgba(53, 64, 36, 0.88);
+  --bg-glass: rgba(255, 255, 255, 0.25);
+  --text-primary: #ffffff;
+  --text-secondary: #ffffff;
+  --text-dark: #354024;
+  --border-color: rgba(255, 255, 255, 0.3);
+  --card-bg: rgba(255, 255, 255, 0.3);
+}
+
+/* Global text readability fixes */
+.text-light,
+.text-lighter,
+.text-accent {
+  color: white !important;
+}
+
+/* Ensure readable text on all pages */
+body {
+  color: white;
+}
+
+.glass {
+  color: white;
+}
+
+.glass * {
+  color: white;
+}
+
+/* Exception for elements with specific background colors */
+.bg-green-100,
+.bg-red-100,
+.bg-yellow-100,
+.bg-blue-100,
+.bg-gray-100,
+.bg-green-500,
+.bg-red-500,
+.bg-yellow-500,
+.bg-blue-500 {
+  color: inherit !important;
+}
+
+/* Ensure form inputs are readable */
+input,
+select,
+textarea {
+  color: #354024 !important;
+}
+
+[data-theme="dark"] {
+  /* Dark mode colors */
+  --bg-primary: rgba(17, 24, 39, 0.95);
+  --bg-glass: rgba(31, 41, 55, 0.8);
+  --text-primary: #f3f4f6;
+  --text-secondary: #d1d5db;
+  --text-dark: #f9fafb;
+  --border-color: rgba(75, 85, 99, 0.5);
+  --card-bg: rgba(55, 65, 81, 0.6);
+}
+
+[data-theme="dark"] body {
+  background-color: #111827;
+}
+
+[data-theme="dark"] body::before {
+  background-color: rgba(17, 24, 39, 0.95);
+}
+
+[data-theme="dark"] .glass {
+  background: var(--bg-glass);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .text-lighter {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .text-light {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .text-dark,
+[data-theme="dark"] .text-darker {
+  color: var(--text-dark) !important;
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background-color: rgba(55, 65, 81, 0.8);
+  color: #f3f4f6;
+  border-color: rgba(75, 85, 99, 0.5);
+}
+
+[data-theme="dark"] .bg-white\/30,
+[data-theme="dark"] .bg-white\/50 {
+  background-color: var(--card-bg) !important;
+}
+
+/* Dark mode toggle button */
+.theme-toggle {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  z-index: 1000;
+}
+
+.theme-toggle:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.theme-toggle ion-icon {
+  font-size: 24px;
+  color: white;
+}
+
+/* Loading indicator */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s, visibility 0.3s;
+}
+
+.loading-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.loading-spinner {
+  width: 60px;
+  height: 60px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Print styles */
+@media print {
+  .no-print,
+  .theme-toggle,
+  .loading-overlay,
+  nav,
+  .sidebar,
+  button:not(.print-button) {
+    display: none !important;
+  }
+  
+  body {
+    background: white !important;
+  }
+  
+  body::before {
+    display: none !important;
+  }
+  
+  .glass {
+    background: white !important;
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+  }
+  
+  .text-lighter,
+  .text-light,
+  .text-dark {
+    color: #000 !important;
+  }
+  
+  @page {
+    margin: 1cm;
+  }
+}
+
+/* Keyboard shortcuts hint */
+.keyboard-shortcuts {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 15px;
+  border-radius: 10px;
+  font-size: 12px;
+  max-width: 250px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s, visibility 0.3s;
+  z-index: 999;
+}
+
+.keyboard-shortcuts.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.keyboard-shortcuts h4 {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.keyboard-shortcuts ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.keyboard-shortcuts li {
+  margin: 5px 0;
+  display: flex;
+  justify-content: space-between;
+}
+
+.keyboard-shortcuts kbd {
+  background: #333;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: monospace;
+  font-size: 11px;
+}
+
+/* Smooth transitions */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}

@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Dashboard - SAO System</title>
+  
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#354024">
+  
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/dark-mode.css">
+  
+  <!-- Scripts -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#354024',
+            secondary: '#4c3d19',
+            accent: '#889063',
+            light: '#cfbb99',
+            lighter: '#e5d7c4'
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    body {
+      background-image: url('https://random-gray-6ix7wliexl.edgeone.app/IMG_9225.jpeg');
+      background-size: cover;
+      background-attachment: fixed;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-color: rgba(53, 64, 36, 0.88);
+      z-index: -1;
+    }
+    .glass {
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    .sidebar-item {
+      transition: all 0.3s;
+    }
+    .sidebar-item:hover {
+      background-color: rgba(53, 64, 36, 0.2);
+    }
+
+    .sidebar-item.active {
+      background-color: rgba(53, 64, 36, 0.3);
+      font-weight: 600;
+    }
+    .calendar-day {
+      transition: all 0.2s;
+    }
+    .calendar-day:hover {
+      background-color: rgba(53, 64, 36, 0.1);
+      transform: scale(1.05);
+    }
+    .calendar-day.today {
+      background-color: rgba(53, 64, 36, 0.3);
+      font-weight: bold;
+    }
+    .calendar-day.has-appointment {
+      border: 2px solid #354024;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 50;
+    }
+    .modal.active {
+      display: flex;
+    }
+    .content-section {
+      display: none;
+    }
+    .content-section.active {
+      display: block;
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  <div class="flex h-screen">
+    <!-- Sidebar -->
+    <div class="w-20 hover:w-64 transition-all duration-300 glass p-4 flex flex-col group">
+      <div class="flex flex-col items-center mb-8">
+        <img src="https://via.placeholder.com/80" alt="Profile" class="w-16 h-16 rounded-full mb-2" id="sidebarProfilePic">
+        <p class="hidden group-hover:block text-sm font-semibold text-lighter text-center" id="sidebarStudentName">Student Name</p>
+      </div>
+      
+      <div class="hidden group-hover:block mb-4">
+        <input type="text" placeholder="Search dates, subjects, classes..." class="w-full px-3 py-2 rounded-lg border border-primary/30 text-sm" onkeyup="searchContent(this.value)" id="globalSearch">
+        <div id="searchResults" class="hidden absolute z-50 mt-2 w-56 bg-white rounded-lg shadow-lg max-h-96 overflow-y-auto">
+          <!-- Search results populated by JS -->
+        </div>
+      </div>
+
+      
+      <nav class="flex-1 space-y-2">
+        <a href="#" onclick="showSection('profile')" class="sidebar-item active flex items-center gap-3 px-3 py-3 rounded-lg text-dark" data-section="profile">
+          <ion-icon name="person" class="text-2xl text-accent"></ion-icon>
+          <span class="hidden group-hover:block">Profile</span>
+        </a>
+        <a href="#" onclick="showSection('dashboard')" class="sidebar-item flex items-center gap-3 px-3 py-3 rounded-lg text-dark" data-section="dashboard">
+          <ion-icon name="stats-chart" class="text-2xl text-accent"></ion-icon>
+          <span class="hidden group-hover:block">Dashboard</span>
+        </a>
+        <a href="#" onclick="showSection('documentation')" class="sidebar-item flex items-center gap-3 px-3 py-3 rounded-lg text-dark" data-section="documentation">
+          <ion-icon name="document-text" class="text-2xl text-accent"></ion-icon>
+          <span class="hidden group-hover:block">Excuse Slips</span>
+        </a>
+        <a href="#" onclick="showSection('classes')" class="sidebar-item flex items-center gap-3 px-3 py-3 rounded-lg text-dark" data-section="classes">
+          <ion-icon name="book" class="text-2xl text-accent"></ion-icon>
+          <span class="hidden group-hover:block">Classes</span>
+        </a>
+        <a href="#" onclick="showSection('calendar')" class="sidebar-item flex items-center gap-3 px-3 py-3 rounded-lg text-dark" data-section="calendar">
+          <ion-icon name="calendar" class="text-2xl text-accent"></ion-icon>
+          <span class="hidden group-hover:block">My Calendar</span>
+        </a>
+        <a href="#" onclick="showSection('notifications')" class="sidebar-item flex items-center gap-3 px-3 py-3 rounded-lg text-dark" data-section="notifications">
+          <ion-icon name="notifications" class="text-2xl text-accent"></ion-icon>
+          <span class="hidden group-hover:block">Notifications</span>
+        </a>
+        <a href="#" onclick="showSection('appointments')" class="sidebar-item flex items-center gap-3 px-3 py-3 rounded-lg text-dark" data-section="appointments">
+          <ion-icon name="time" class="text-2xl text-accent"></ion-icon>
+          <span class="hidden group-hover:block">My Appointments</span>
+        </a>
+      </nav>
+      
+      <button onclick="logout()" class="sidebar-item flex items-center gap-3 px-3 py-3 rounded-lg text-red-600 mt-auto">
+        <ion-icon name="log-out" class="text-2xl text-red-500"></ion-icon>
+        <span class="hidden group-hover:block">Logout</span>
+      </button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 overflow-y-auto p-8">
+      <div class="max-w-7xl mx-auto">
+
+        
+        <!-- PROFILE SECTION -->
+        <div id="profileSection" class="content-section active">
+          <h1 class="text-3xl font-bold text-lighter mb-8">Hello, <span id="studentGreeting">Student</span>!</h1>
+          
+          <div class="grid grid-cols-3 gap-6 mb-8">
+            <div class="col-span-2 glass rounded-2xl p-6">
+              <div class="flex gap-6">
+                <div>
+                  <img src="https://via.placeholder.com/150" alt="Profile" class="w-32 h-32 rounded-full" id="profilePic">
+                  <button onclick="uploadPhoto()" class="mt-2 text-sm text-primary hover:underline">Upload Photo</button>
+                </div>
+                <div class="flex-1">
+                  <h2 class="text-2xl font-bold text-lighter mb-4">Student Profile</h2>
+                  <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div><span class="text-light">Name:</span> <span class="font-semibold text-lighter" id="profileName">John Doe</span></div>
+                    <div><span class="text-light">LRN:</span> <span class="font-semibold text-lighter" id="profileLRN">2024120001</span></div>
+                    <div><span class="text-light">Grade:</span> <span class="font-semibold text-lighter" id="profileGrade">Grade 12</span></div>
+                    <div><span class="text-light">Section:</span> <span class="font-semibold text-lighter" id="profileSection">St. Margaret</span></div>
+                    <div><span class="text-light">Strand:</span> <span class="font-semibold text-lighter" id="profileStrand">STEM</span></div>
+                    <div><span class="text-light">Gender:</span> <span class="font-semibold text-lighter" id="profileGender">Male</span></div>
+                    <div class="col-span-2"><span class="text-light">Email:</span> <span class="font-semibold text-lighter" id="profileEmail">student@email.com</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="glass rounded-2xl p-6">
+              <h3 class="font-bold text-dark mb-4">Attendance Summary</h3>
+              <div class="space-y-3">
+                <div class="flex justify-between">
+                  <span class="text-sm text-darker">Total Days</span>
+                  <span class="font-bold text-primary" id="totalDays">180</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-sm text-darker">Present</span>
+                  <span class="font-bold text-green-600" id="presentDays">107</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-sm text-darker">Absences</span>
+                  <span class="font-bold text-red-600" id="absentDays">5</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-sm text-darker">Late</span>
+                  <span class="font-bold text-yellow-600" id="lateDays">8</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-sm text-darker">Excused</span>
+                  <span class="font-bold text-blue-600" id="excusedDays">3</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass rounded-2xl p-6">
+            <h3 class="font-bold text-lighter mb-4">Parent/Guardian Information</h3>
+            <div class="grid grid-cols-3 gap-4 text-sm">
+              <div><span class="text-light">Name:</span> <span class="font-semibold text-lighter" id="parentName">Parent Name</span></div>
+              <div><span class="text-light">Relationship:</span> <span class="font-semibold text-lighter" id="parentRelation">Mother</span></div>
+              <div><span class="text-light">Contact:</span> <span class="font-semibold text-lighter" id="parentContact">09XX XXX XXXX</span></div>
+              <div class="col-span-2"><span class="text-light">Email:</span> <span class="font-semibold text-lighter" id="parentEmail">parent@email.com</span></div>
+              <div class="col-span-3"><span class="text-light">Address:</span> <span class="font-semibold text-lighter" id="parentAddress">Home Address</span></div>
+            </div>
+          </div>
+        </div>
+
+
+
+        <!-- DASHBOARD SECTION -->
+        <div id="dashboardSection" class="content-section">
+          <h1 class="text-3xl font-bold text-lighter mb-8">Dashboard Overview</h1>
+          
+          <div class="grid grid-cols-4 gap-6 mb-8">
+            <div class="glass rounded-xl p-6">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-light">Attendance Rate</span>
+                <ion-icon name="checkmark-circle" class="text-2xl text-green-500"></ion-icon>
+              </div>
+              <p class="text-3xl font-bold text-lighter" id="attendanceRate">89%</p>
+            </div>
+            <div class="glass rounded-xl p-6">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-light">Total Classes</span>
+                <ion-icon name="book" class="text-2xl text-accent"></ion-icon>
+              </div>
+              <p class="text-3xl font-bold text-lighter" id="totalClasses">8</p>
+            </div>
+            <div class="glass rounded-xl p-6">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-light">Appointments</span>
+                <ion-icon name="calendar" class="text-2xl text-blue-500"></ion-icon>
+              </div>
+              <p class="text-3xl font-bold text-lighter" id="upcomingAppointments">2</p>
+            </div>
+            <div class="glass rounded-xl p-6">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-light">Excuse Slips</span>
+                <ion-icon name="document-text" class="text-2xl text-light"></ion-icon>
+              </div>
+              <p class="text-3xl font-bold text-lighter" id="totalDocuments">12</p>
+            </div>
+          </div>
+
+          <!-- Charts Row -->
+          <div class="grid grid-cols-2 gap-6 mb-8">
+            <div class="glass rounded-2xl p-6">
+              <h3 class="font-bold text-lighter mb-4">Attendance Trend (Last 30 Days)</h3>
+              <canvas id="attendanceChart" height="200"></canvas>
+            </div>
+            
+            <div class="glass rounded-2xl p-6">
+              <h3 class="font-bold text-lighter mb-4">Attendance Distribution</h3>
+              <canvas id="attendancePieChart" height="200"></canvas>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-6">
+            <div class="glass rounded-2xl p-6">
+              <h3 class="font-bold text-lighter mb-4">Recent Attendance</h3>
+              <div class="space-y-3" id="recentAttendance">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+            
+            <div class="glass rounded-2xl p-6">
+              <h3 class="font-bold text-lighter mb-4">Upcoming Appointments</h3>
+              <div class="space-y-3" id="upcomingAppointmentsList">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+
+        <!-- DOCUMENTATION SECTION (EXCUSE SLIPS) -->
+        <div id="documentationSection" class="content-section">
+          <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-lighter">Excuse Slip Submission</h1>
+            <button onclick="uploadExcuseSlip()" class="bg-primary text-lighter px-6 py-3 rounded-lg hover:bg-secondary transition font-semibold flex items-center gap-2">
+              <ion-icon name="cloud-upload" class="text-xl"></ion-icon>
+              Upload Excuse Slip
+            </button>
+          </div>
+          
+          <div class="glass rounded-2xl p-6 mb-6">
+            <div class="flex gap-4 mb-4">
+              <input type="text" placeholder="Search excuse slips..." class="flex-1 px-4 py-2 rounded-lg border border-primary/30" id="docSearch" onkeyup="filterDocuments()">
+              <select class="px-4 py-2 rounded-lg border border-primary/30" id="docFilter" onchange="filterDocuments()">
+                <option value="all">All Slips</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 gap-4" id="documentsList">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- CLASSES SECTION -->
+        <div id="classesSection" class="content-section">
+          <h1 class="text-3xl font-bold text-lighter mb-8">My Classes</h1>
+          
+          <div class="grid grid-cols-2 gap-6" id="classesList">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- CALENDAR SECTION -->
+        <div id="calendarSection" class="content-section">
+          <h1 class="text-3xl font-bold text-dark mb-8">My Calendar</h1>
+          
+          <div class="grid grid-cols-3 gap-6">
+            <div class="col-span-2 glass rounded-2xl p-6">
+              <div class="flex justify-between items-center mb-6">
+                <button onclick="previousMonth()" class="p-2 hover:bg-primary/20 rounded-lg">
+                  <ion-icon name="chevron-back" class="text-2xl text-accent"></ion-icon>
+                </button>
+                <h2 class="text-2xl font-bold text-dark" id="calendarMonth">March 2026</h2>
+                <button onclick="nextMonth()" class="p-2 hover:bg-primary/20 rounded-lg">
+                  <ion-icon name="chevron-forward" class="text-2xl text-accent"></ion-icon>
+                </button>
+              </div>
+              
+              <div class="grid grid-cols-7 gap-2 mb-2">
+                <div class="text-center text-sm font-semibold text-darker">Sun</div>
+                <div class="text-center text-sm font-semibold text-darker">Mon</div>
+                <div class="text-center text-sm font-semibold text-darker">Tue</div>
+                <div class="text-center text-sm font-semibold text-darker">Wed</div>
+                <div class="text-center text-sm font-semibold text-darker">Thu</div>
+                <div class="text-center text-sm font-semibold text-darker">Fri</div>
+                <div class="text-center text-sm font-semibold text-darker">Sat</div>
+              </div>
+              
+              <div class="grid grid-cols-7 gap-2" id="calendarDays">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+            
+            <div class="glass rounded-2xl p-6">
+              <h3 class="font-bold text-dark mb-4">Appointments</h3>
+              <button onclick="bookAppointment()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-dark transition mb-4">
+                Book Appointment
+              </button>
+              <div class="space-y-3" id="appointmentsList">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+
+        <!-- NOTIFICATIONS SECTION -->
+        <div id="notificationsSection" class="content-section">
+          <h1 class="text-3xl font-bold text-lighter mb-8">Notifications</h1>
+          
+          <div class="glass rounded-2xl p-6 mb-6">
+            <div class="flex gap-2 flex-wrap">
+              <button onclick="filterNotifications('all')" class="notification-filter-btn active px-4 py-2 rounded-lg bg-primary/20 text-primary font-semibold hover:bg-primary/30 transition">
+                All
+              </button>
+              <button onclick="filterNotifications('unread')" class="notification-filter-btn px-4 py-2 rounded-lg bg-white/50 text-dark hover:bg-primary/20 transition">
+                Unread
+              </button>
+              <button onclick="filterNotifications('appointments')" class="notification-filter-btn px-4 py-2 rounded-lg bg-white/50 text-dark hover:bg-primary/20 transition">
+                Appointments
+              </button>
+              <button onclick="filterNotifications('violations')" class="notification-filter-btn px-4 py-2 rounded-lg bg-white/50 text-dark hover:bg-primary/20 transition">
+                Violations
+              </button>
+              <button onclick="filterNotifications('attendance')" class="notification-filter-btn px-4 py-2 rounded-lg bg-white/50 text-dark hover:bg-primary/20 transition">
+                Attendance
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-4" id="notificationsList">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- MY APPOINTMENTS SECTION -->
+        <div id="appointmentsSection" class="content-section">
+          <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-lighter">My Appointments</h1>
+            <button onclick="bookNewAppointment()" class="bg-primary text-lighter px-6 py-3 rounded-lg hover:bg-secondary transition font-semibold">
+              <ion-icon name="add-circle" class="text-xl align-middle mr-2"></ion-icon>
+              Book New Appointment
+            </button>
+          </div>
+          
+          <div class="glass rounded-2xl p-6 mb-6">
+            <div class="flex gap-2">
+              <button onclick="filterAppointments('upcoming')" class="appointment-filter-btn active px-4 py-2 rounded-lg bg-primary/20 text-primary font-semibold hover:bg-primary/30 transition">
+                Upcoming
+              </button>
+              <button onclick="filterAppointments('past')" class="appointment-filter-btn px-4 py-2 rounded-lg bg-white/50 text-dark hover:bg-primary/20 transition">
+                Past
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 gap-4" id="myAppointmentsList">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- Appointment Modal -->
+  <div id="appointmentModal" class="modal items-center justify-center">
+    <div class="glass rounded-2xl p-8 max-w-md w-full mx-4">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-lighter">Book Appointment</h2>
+        <button onclick="closeAppointmentModal()" class="text-lighter hover:text-light">
+          <ion-icon name="close" class="text-3xl text-red-500"></ion-icon>
+        </button>
+      </div>
+      
+      <form onsubmit="submitAppointment(event)" class="space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-light mb-1">Date *</label>
+          <input type="date" id="appointmentDate" class="w-full px-4 py-2 rounded-lg border-2 border-primary focus:outline-none" required>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-light mb-1">Time *</label>
+          <input type="time" id="appointmentTime" class="w-full px-4 py-2 rounded-lg border-2 border-primary focus:outline-none" required>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-light mb-1">Purpose *</label>
+          <select id="appointmentPurpose" class="w-full px-4 py-2 rounded-lg border-2 border-primary focus:outline-none" required>
+            <option value="">Select Purpose</option>
+            <option value="Consultation">Consultation</option>
+            <option value="Document Request">Document Request</option>
+            <option value="Guidance">Guidance Counseling</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-light mb-1">Notes</label>
+          <textarea id="appointmentNotes" rows="3" class="w-full px-4 py-2 rounded-lg border-2 border-primary focus:outline-none" placeholder="Additional details..."></textarea>
+        </div>
+        <button type="submit" class="w-full bg-primary text-lighter py-3 rounded-lg font-semibold hover:bg-secondary transition">
+          Submit Request
+        </button>
+      </form>
+    </div>
+  </div>
+
+
+
+  <!-- Excuse Slip Upload Modal -->
+  <div id="documentModal" class="modal items-center justify-center">
+    <div class="glass rounded-2xl p-8 max-w-md w-full mx-4">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-lighter">Upload Excuse Slip</h2>
+        <button onclick="closeDocumentModal()" class="text-lighter hover:text-light">
+          <ion-icon name="close" class="text-3xl text-red-500"></ion-icon>
+        </button>
+      </div>
+      
+      <form onsubmit="submitExcuseSlip(event)" class="space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-light mb-1">Reason for Absence/Late *</label>
+          <select id="excuseReason" class="w-full px-4 py-2 rounded-lg border-2 border-primary focus:outline-none" required>
+            <option value="">Select Reason</option>
+            <option value="Sick">Sick</option>
+            <option value="Medical Appointment">Medical Appointment</option>
+            <option value="Family Emergency">Family Emergency</option>
+            <option value="Personal Matter">Personal Matter</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-light mb-1">Date of Absence/Late *</label>
+          <input type="date" id="excuseDate" class="w-full px-4 py-2 rounded-lg border-2 border-primary focus:outline-none" required>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-light mb-1">Upload Excuse Slip Picture *</label>
+          <div class="border-2 border-dashed border-primary rounded-lg p-6 text-center">
+            <input type="file" id="excuseSlipFile" accept="image/*" class="hidden" onchange="previewExcuseSlip(event)" required>
+            <button type="button" onclick="document.getElementById('excuseSlipFile').click()" class="bg-primary/20 text-primary px-4 py-2 rounded-lg hover:bg-primary/30 transition">
+              <ion-icon name="camera" class="text-2xl align-middle mr-2"></ion-icon>
+              Choose Image
+            </button>
+            <p class="text-xs text-light mt-2">JPG, PNG, or HEIC (Max 5MB)</p>
+            <div id="imagePreview" class="mt-4 hidden">
+              <img id="previewImg" src="" alt="Preview" class="max-w-full h-48 mx-auto rounded-lg">
+              <p id="fileName" class="text-sm text-light mt-2"></p>
+            </div>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-light mb-1">Additional Notes</label>
+          <textarea id="excuseNotes" rows="3" class="w-full px-4 py-2 rounded-lg border-2 border-primary focus:outline-none" placeholder="Any additional information..."></textarea>
+        </div>
+        <button type="submit" class="w-full bg-primary text-lighter py-3 rounded-lg font-semibold hover:bg-secondary transition">
+          Submit Excuse Slip
+        </button>
+      </form>
+    </div>
+  </div>
+
+
+
+  <!-- SAO Appointment Modal -->
+  <div id="saoAppointmentModal" class="modal items-center justify-center">
+    <div class="glass rounded-2xl p-8 max-w-md w-full mx-4">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-lighter">Book SAO Appointment</h2>
+        <button onclick="closeSAOAppointmentModal()" class="text-lighter hover:text-light">
+          <ion-icon name="close" class="text-3xl text-red-500"></ion-icon>
+        </button>
+      </div>
+      
+      <p class="text-light mb-6">What would you like to discuss?</p>
+      
+      <div class="space-y-3">
+        <button onclick="selectAppointmentType('violation')" class="w-full bg-red-500 text-white py-4 rounded-lg hover:bg-red-600 transition font-semibold flex items-center justify-center gap-2">
+          <ion-icon name="warning" class="text-2xl"></ion-icon>
+          Violation
+        </button>
+        <button onclick="selectAppointmentType('attendance')" class="w-full bg-accent text-white py-4 rounded-lg hover:bg-primary transition font-semibold flex items-center justify-center gap-2">
+          <ion-icon name="calendar" class="text-2xl"></ion-icon>
+          Attendance Matters
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Violation Type Selection Modal -->
+  <div id="violationTypeModal" class="modal items-center justify-center">
+    <div class="glass rounded-2xl p-8 max-w-md w-full mx-4">
+      <div class="flex justify-between items-center mb-6">
+        <button onclick="backToSAOAppointment()" class="text-accent hover:text-primary">
+          <ion-icon name="arrow-back" class="text-2xl"></ion-icon>
+        </button>
+        <h2 class="text-2xl font-bold text-lighter">Select Violation Type</h2>
+        <button onclick="closeSAOAppointmentModal()" class="text-lighter hover:text-light">
+          <ion-icon name="close" class="text-3xl text-red-500"></ion-icon>
+        </button>
+      </div>
+      
+      <div class="space-y-2 max-h-96 overflow-y-auto" id="violationTypesList">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Attendance Matter Selection Modal -->
+  <div id="attendanceMatterModal" class="modal items-center justify-center">
+    <div class="glass rounded-2xl p-8 max-w-md w-full mx-4">
+      <div class="flex justify-between items-center mb-6">
+        <button onclick="backToSAOAppointment()" class="text-accent hover:text-primary">
+          <ion-icon name="arrow-back" class="text-2xl"></ion-icon>
+        </button>
+        <h2 class="text-2xl font-bold text-lighter">Select Attendance Matter</h2>
+        <button onclick="closeSAOAppointmentModal()" class="text-lighter hover:text-light">
+          <ion-icon name="close" class="text-3xl text-red-500"></ion-icon>
+        </button>
+      </div>
+      
+      <div class="space-y-3">
+        <button onclick="selectAttendanceMatter('3x late')" class="w-full bg-white/50 text-dark py-4 rounded-lg hover:bg-accent/20 transition font-semibold text-left px-4">
+          3x Late
+        </button>
+        <button onclick="selectAttendanceMatter('5x late')" class="w-full bg-white/50 text-dark py-4 rounded-lg hover:bg-accent/20 transition font-semibold text-left px-4">
+          5x Late
+        </button>
+        <button onclick="selectAttendanceMatter('3x absent')" class="w-full bg-white/50 text-dark py-4 rounded-lg hover:bg-accent/20 transition font-semibold text-left px-4">
+          3x Absent
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Schedule Appointment Modal -->
+  <div id="scheduleAppointmentModal" class="modal items-center justify-center">
+    <div class="glass rounded-2xl p-8 max-w-md w-full mx-4">
+      <div class="flex justify-between items-center mb-6">
+        <button onclick="backToViolationType()" class="text-accent hover:text-primary">
+          <ion-icon name="arrow-back" class="text-2xl"></ion-icon>
+        </button>
+        <h2 class="text-2xl font-bold text-lighter">Schedule Appointment</h2>
+        <button onclick="closeSAOAppointmentModal()" class="text-lighter hover:text-light">
+          <ion-icon name="close" class="text-3xl text-red-500"></ion-icon>
+        </button>
+      </div>
+      
+      <form onsubmit="confirmScheduledAppointment(event)" class="space-y-4">
+        <div class="bg-white/50 rounded-lg p-4 mb-4">
+          <p class="text-sm text-light">Type:</p>
+          <p class="font-semibold text-primary" id="selectedAppointmentType"></p>
+          <p class="text-sm text-light mt-2">Matter:</p>
+          <p class="font-semibold text-primary" id="selectedAppointmentMatter"></p>
+        </div>
+        
+        <div>
+          <label class="block text-sm font-semibold text-light mb-1">Date *</label>
+          <input type="date" id="scheduleDate" class="w-full px-4 py-2 rounded-lg border-2 border-primary focus:outline-none" required>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-light mb-1">Time *</label>
+          <input type="time" id="scheduleTime" class="w-full px-4 py-2 rounded-lg border-2 border-primary focus:outline-none" required>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-light mb-1">Additional Details</label>
+          <textarea id="scheduleDetails" rows="3" class="w-full px-4 py-2 rounded-lg border-2 border-primary focus:outline-none" placeholder="Any additional information..."></textarea>
+        </div>
+        <button type="submit" class="w-full bg-primary text-lighter py-3 rounded-lg font-semibold hover:bg-secondary transition">
+          Confirm Appointment
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/constants.js"></script>
+  <script src="js/utilities.js"></script>
+  <script src="js/student-dashboard.js"></script>
+</body>
+</html>
