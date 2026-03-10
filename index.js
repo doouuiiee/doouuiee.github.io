@@ -1,64 +1,77 @@
-/**
- * Export lib/mongoose
- *
- */
-
 'use strict';
 
-const mongoose = require('./lib/');
+const SqlString = require('sql-escaper');
 
-module.exports = mongoose;
-module.exports.default = mongoose;
-module.exports.mongoose = mongoose;
+const ConnectionConfig = require('./lib/connection_config.js');
+const parserCache = require('./lib/parsers/parser_cache.js');
 
-// Re-export for ESM support
-module.exports.cast = mongoose.cast;
-module.exports.STATES = mongoose.STATES;
-module.exports.setDriver = mongoose.setDriver;
-module.exports.set = mongoose.set;
-module.exports.get = mongoose.get;
-module.exports.createConnection = mongoose.createConnection;
-module.exports.connect = mongoose.connect;
-module.exports.disconnect = mongoose.disconnect;
-module.exports.startSession = mongoose.startSession;
-module.exports.pluralize = mongoose.pluralize;
-module.exports.model = mongoose.model;
-module.exports.deleteModel = mongoose.deleteModel;
-module.exports.modelNames = mongoose.modelNames;
-module.exports.plugin = mongoose.plugin;
-module.exports.connections = mongoose.connections;
-module.exports.version = mongoose.version;
-module.exports.Aggregate = mongoose.Aggregate;
-module.exports.Mongoose = mongoose.Mongoose;
-module.exports.Schema = mongoose.Schema;
-module.exports.SchemaType = mongoose.SchemaType;
-module.exports.SchemaTypes = mongoose.SchemaTypes;
-module.exports.VirtualType = mongoose.VirtualType;
-module.exports.Types = mongoose.Types;
-module.exports.Query = mongoose.Query;
-module.exports.Model = mongoose.Model;
-module.exports.Document = mongoose.Document;
-module.exports.ObjectId = mongoose.ObjectId;
-module.exports.isValidObjectId = mongoose.isValidObjectId;
-module.exports.isObjectIdOrHexString = mongoose.isObjectIdOrHexString;
-module.exports.syncIndexes = mongoose.syncIndexes;
-module.exports.Decimal128 = mongoose.Decimal128;
-module.exports.Mixed = mongoose.Mixed;
-module.exports.Date = mongoose.Date;
-module.exports.Number = mongoose.Number;
-module.exports.Error = mongoose.Error;
-module.exports.MongooseError = mongoose.MongooseError;
-module.exports.now = mongoose.now;
-module.exports.CastError = mongoose.CastError;
-module.exports.SchemaTypeOptions = mongoose.SchemaTypeOptions;
-module.exports.mongo = mongoose.mongo;
-module.exports.mquery = mongoose.mquery;
-module.exports.sanitizeFilter = mongoose.sanitizeFilter;
-module.exports.trusted = mongoose.trusted;
-module.exports.skipMiddlewareFunction = mongoose.skipMiddlewareFunction;
-module.exports.overwriteMiddlewareResult = mongoose.overwriteMiddlewareResult;
+const Connection = require('./lib/connection.js');
 
-// The following properties are not exported using ESM because `setDriver()` can mutate these
-// module.exports.connection = mongoose.connection;
-// module.exports.Collection = mongoose.Collection;
-// module.exports.Connection = mongoose.Connection;
+exports.createConnection = require('./lib/create_connection.js');
+exports.connect = exports.createConnection;
+exports.Connection = Connection;
+exports.ConnectionConfig = ConnectionConfig;
+
+const Pool = require('./lib/pool.js');
+const PoolCluster = require('./lib/pool_cluster.js');
+const createPool = require('./lib/create_pool.js');
+const createPoolCluster = require('./lib/create_pool_cluster.js');
+
+exports.createPool = createPool;
+
+exports.createPoolCluster = createPoolCluster;
+
+exports.createQuery = Connection.createQuery;
+
+exports.Pool = Pool;
+
+exports.PoolCluster = PoolCluster;
+
+exports.createServer = function (handler) {
+  const Server = require('./lib/server.js');
+  const s = new Server();
+  if (handler) {
+    s.on('connection', handler);
+  }
+  return s;
+};
+
+exports.PoolConnection = require('./lib/pool_connection.js');
+exports.authPlugins = require('./lib/auth_plugins');
+exports.escape = SqlString.escape;
+exports.escapeId = SqlString.escapeId;
+exports.format = SqlString.format;
+exports.raw = SqlString.raw;
+
+exports.__defineGetter__(
+  'createConnectionPromise',
+  () => require('./promise.js').createConnection
+);
+
+exports.__defineGetter__(
+  'createPoolPromise',
+  () => require('./promise.js').createPool
+);
+
+exports.__defineGetter__(
+  'createPoolClusterPromise',
+  () => require('./promise.js').createPoolCluster
+);
+
+exports.__defineGetter__('Types', () => require('./lib/constants/types.js'));
+
+exports.__defineGetter__('Charsets', () =>
+  require('./lib/constants/charsets.js')
+);
+
+exports.__defineGetter__('CharsetToEncoding', () =>
+  require('./lib/constants/charset_encodings.js')
+);
+
+exports.setMaxParserCache = function (max) {
+  parserCache.setMaxCache(max);
+};
+
+exports.clearParserCache = function () {
+  parserCache.clearCache();
+};
