@@ -1,30 +1,23 @@
 {
-    "name": "@types/webidl-conversions",
-    "version": "7.0.3",
-    "description": "TypeScript definitions for webidl-conversions",
-    "homepage": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/webidl-conversions",
-    "license": "MIT",
-    "contributors": [
-        {
-            "name": "ExE Boss",
-            "githubUsername": "ExE-Boss",
-            "url": "https://github.com/ExE-Boss"
-        },
-        {
-            "name": "BendingBender",
-            "githubUsername": "BendingBender",
-            "url": "https://github.com/BendingBender"
-        }
-    ],
-    "main": "",
-    "types": "index.d.ts",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
-        "directory": "types/webidl-conversions"
-    },
-    "scripts": {},
-    "dependencies": {},
-    "typesPublisherContentHash": "ff1514e10869784e8b7cca9c4099a4213d3f14b48c198b1bf116300df94bf608",
-    "typeScriptVersion": "4.5"
+  "name": "webidl-conversions",
+  "version": "3.0.1",
+  "description": "Implements the WebIDL algorithms for converting to and from JavaScript values",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "mocha test/*.js"
+  },
+  "repository": "jsdom/webidl-conversions",
+  "keywords": [
+    "webidl",
+    "web",
+    "types"
+  ],
+  "files": [
+    "lib/"
+  ],
+  "author": "Domenic Denicola <d@domenic.me> (https://domenic.me/)",
+  "license": "BSD-2-Clause",
+  "devDependencies": {
+    "mocha": "^1.21.4"
+  }
 }
